@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Many-to-Many Voice Conversion via Speaker Averaging - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .authors {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .affiliation {
+            color: #777;
+            font-style: italic;
+        }
+        
+        .links {
+            margin-top: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 25px;
+            margin: 5px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        section {
+            background: white;
+            padding: 40px;
+            margin-bottom: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+        
+        h3 {
+            color: #34495e;
+            margin: 30px 0 15px 0;
+            font-size: 1.4em;
+        }
+        
+        .abstract {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #444;
+            text-align: justify;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            overflow-x: auto;
+            display: block;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        audio {
+            width: 200px;
+            height: 40px;
+            margin: 5px 0;
+        }
+        
+        .audio-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .method-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .badge-ours {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .badge-baseline {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .badge-source {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8em; }
+            table { font-size: 0.9em; }
+            audio { width: 150px; }
+            th, td { padding: 10px 5px; }
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .architecture-img {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部信息 -->
+        <header>
+            <h1>多说话人语音平均模型</h1>
+            <div class="authors">
+                 名字
+            </div>
+           
+            <div class="links">
+                <a href="#" class="btn">论文 PDF</a>
+                <a href="#" class="btn">代码 GitHub</a>
+            </div>
+        </header>
+
+        <!-- 摘要部分 -->
+        <section>
+            <h2>Abstract</h2>
+            <div class="abstract">
+                <p>
+                    <strong>语音转换（Voice Conversion, VC）</strong> 旨在将源说话人的语音转换为目标说话人的音色，同时保留语言内容。
+                    传统的多对多语音转换方法通常需要大量平行数据或复杂的说话人编码器。本研究提出了一种基于
+                    <span class="highlight">说话人平均（Speaker Averaging）</span> 
+                    的新型语音转换框架，通过平均多个参考说话人的音色嵌入来创建虚拟目标说话人，实现灵活的音色控制。
+                </p>
+                <br>
+                <p>
+                    我们的方法采用自编码器架构，结合矢量量化（VQ）技术分离说话人特征与内容特征。核心创新在于引入了
+                    <strong>多说话人平均模块</strong>，允许通过加权平均任意数量的说话人音色来生成新的目标音色，
+                    无需针对每个新说话人重新训练模型。实验结果表明，该方法在零样本（zero-shot）场景下具有良好的泛化能力，
+                    在语音自然度和说话人相似度方面均优于基线方法。
+                </p>
+            </div>
+            
+            <!-- 关键指标展示 -->
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-value">4.2</div>
+                    <div class="metric-label">说话人内容相似度</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0.85</div>
+                    <div class="metric-label">说话人不相似度</div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 音频演示：未见说话人 -->
+        <section>
+            <h2>Demos: Unseen Speakers (Zero-Shot)</h2>
+            <p style="margin-bottom: 20px; color: #666;">
+                以下示例中，源说话人和目标说话人均未在训练集中出现，模型仅通过一句话（one-shot）进行转换。
+            </p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Target</th>
+                        <th>Ours (Speaker Averaging)</th>
+                        <th>Baseline (AutoVC)</th>
+                        <th>Baseline (VQVC)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 示例行 1 -->
+                    <tr>
+                        <td>
+                            <div class="audio-label">Source Speech</div>
+                            <span class="method-badge badge-source">Male</span><br>
+                            <audio controls>
+                                <source src="audio/unseen/src_1.wav" type="audio/wav">
+                                浏览器不支持音频播放
+                            </audio>
+                        </td>
+                        <td>
+                            <div class="audio-label">Target Reference</div>
+                            <span class="method-badge badge-source">Female</span><br>
+                            <audio controls>
+                                <source src="audio/unseen/tgt_1.wav" type="audio/wav">
+                                浏览器不支持音频播放
+                            </audio>
+                        </td>
+                        <td>
+                            <div class="audio-label">Converted</div>
+                            <span class="method-badge badge-ours">Our Method</span><br>
+                            <audio controls>
+                                <source src="audio/unseen/ours_1.wav" type="audio/wav">
+                                浏览器不支持音频播放
+                            </audio>
+                        </td>
+                        <td>
+                            <div class="audio-label">Converted</div>
+                            <span class="method-badge badge-baseline">AutoVC</span><br>
+                            <audio controls>
+                                <source src="audio/unseen/autovc_1.wav" type="audio/wav">
+                                浏览器不支持音频播放
+                            </audio>
+                        </td>
+                        <td>
+                            <div class="audio-label">Converted</div>
+                            <span class="method-badge badge-baseline">VQVC</span><br>
+                            <audio controls>
+                                <source src="audio/unseen/vqvc_1.wav" type="audio/wav">
+                                浏览器不支持音频播放
+                            </audio>
+                        </td>
+                    </tr>
+                    <!-- 复制上面<tr>添加更多示例 -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 音频演示：多说话人平均 -->
+        <section>
+            <h2>Demos: Speaker Averaging Effect</h2>
+            <p style="margin-bottom: 20px; color: #666;">
+                展示通过平均不同数量说话人（2人、4人、8人）生成的虚拟音色效果。
+            </p>
+            
+            <h3>Case 1: Average of 2 Speakers</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Speaker A</th>
+                        <th>Speaker B</th>
+                        <th>Averaged (Ours)</th>
+                        <th>Content Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <audio controls>
+                                <source src="audio/avg/spk_a.wav" type="audio/wav">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="audio/avg/spk_b.wav" type="audio/wav">
+                            </audio>
+                        </td>
+                        <td>
+                            <span class="method-badge badge-ours">Averaged Voice</span><br>
+                            <audio controls>
+                                <source src="audio/avg/avg_2.wav" type="audio/wav">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="audio/avg/content.wav" type="audio/wav">
+                            </audio>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- -footer -->
+        <div class="footer">
+            <p>© 2025 应急管理大学 | 联系邮箱：your.email@yingji.edu.cn</p>
+            <p style="margin-top: 10px; font-size: 0.85em;">
+                本项目代码基于 PyTorch 实现，遵循 MIT 开源协议
+            </p>
+        </div>
+    </div>
+</body>
+</html>
